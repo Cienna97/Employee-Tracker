@@ -121,10 +121,10 @@ showDepartments = () => {
   console.log('Showing all departments...\n');
   const sql = `SELECT department.id AS id, department.name AS department FROM department`; 
 
-  connection.promise().query(sql, (err, rows) => {
-    if (err) throw err;
-    console.table(rows);
-    promptUser();
+  connection.query(sql, (err, rows) => {
+  if (err) throw err;
+  console.table("Response:", rows);
+  promptUser();
   });
 };
 
@@ -528,4 +528,89 @@ deleteDepartment = () => {
     });
   });
 };
+
+// delete a role
+
+deleteRole = () => {
+  const roleSql = `SELECT * FROM role`; 
+
+  connection.promise().query(roleSql, (err, data) => {
+    if (err) throw err; 
+
+    const role = data.map(({ title, id }) => ({ name: title, value: id }));
+
+    inquirer.prompt([
+      {
+        type: 'list', 
+        name: 'role',
+        message: "What role do you want to delete?",
+        choices: role
+      }
+    ])
+      .then(roleChoice => {
+        const role = roleChoice.role;
+        const sql = `DELETE FROM role WHERE id = ?`;
+
+        connection.query(sql, role, (err, result) => {
+          if (err) throw err;
+          console.log("Successfully deleted!"); 
+
+          showRoles();
+      });
+    });
+  });
+};
+
+// delete an old employee
+
+deleteEmployee = () => {
+  // get employees from employee table 
+  const employeeSql = `SELECT * FROM employee`;
+
+  connection.promise().query(employeeSql, (err, data) => {
+    if (err) throw err; 
+
+  const employees = data.map(({ id, first_name, last_name }) => ({ name: first_name + " "+ last_name, value: id }));
+
+    inquirer.prompt([
+      {
+        type: 'list',
+        name: 'name',
+        message: "Which employee would you like to delete?",
+        choices: employees
+      }
+    ])
+      .then(empChoice => {
+        const employee = empChoice.name;
+
+        const sql = `DELETE FROM employee WHERE id = ?`;
+
+        connection.query(sql, employee, (err, result) => {
+          if (err) throw err;
+          console.log("Successfully Deleted!");
+        
+          showEmployees();
+    });
+  });
+ });
+};
+
+// view department budget 
+viewBudget = () => {
+  console.log('Showing budget by department...\n');
+
+  const sql = `SELECT department_id AS id, 
+                      department.name AS department,
+                      SUM(salary) AS budget
+               FROM  role  
+               JOIN department ON role.department_id = department.id GROUP BY  department_id`;
+  
+  connection.promise().query(sql, (err, rows) => {
+    if (err) throw err; 
+    console.table(rows);
+
+    promptUser(); 
+  });            
+};
+
 
